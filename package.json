@@ -1,0 +1,29 @@
+{
+  "name": "express-basics",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dev": "nodemon ./src/index.mjs",
+    "start": "node ./src/index.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://mjmags20: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@github.com/mjmags2020/express-basics.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mjmags2020/express-basics/issues"
+  },
+  "homepage": "https://github.com/mjmags2020/express-basics#readme",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "type": "module"
+}
