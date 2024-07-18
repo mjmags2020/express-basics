@@ -1,4 +1,12 @@
 import express from "express";
+import {
+  query,
+  validationResult,
+  body,
+  matchedData,
+  checkSchema,
+} from "express-validator";
+import { createUserValidationSchema } from "./utils/validationSchema.mjs";
 
 const app = express();
 app.use(express.json());
@@ -37,19 +45,25 @@ app.get("/", (request, response) => {
   response.status(201).send({ msg: "hello" });
 });
 
-app.get("/api/users", (request, response) => {
-  console.log(request.query);
-  const {
-    query: { username },
-  } = request;
+app.get(
+  "/api/users",
+  query("username").isString().notEmpty().isLength({ min: 3 }),
+  (request, response) => {
+    const result = validationResult(request);
+    if (result?.errors)
+      return response.status(400).send({ msg: result?.errors });
+    const {
+      query: { username },
+    } = request;
 
-  if (username)
-    return response
-      .status(201)
-      .send(mockUserData.find((user) => user.username === username));
+    if (username)
+      return response
+        .status(201)
+        .send(mockUserData.find((user) => user.username === username));
 
-  response.status(201).send(mockUserData);
-});
+    response.status(201).send(mockUserData);
+  }
+);
 
 app.get("/api/users/:id", resolvevIndexByUserId, (request, response) => {
   response.status(201).send(mockUserData[request.findIndex]);
@@ -72,15 +86,24 @@ app.get("/api/products", (request, response) => {
 
 // POST
 
-app.post("/api/users", (request, response) => {
-  console.log(request.body);
-  const newUser = {
-    id: mockUserData[mockUserData.length - 1].id + 1,
-    ...request.body,
-  };
-  mockUserData.push(newUser);
-  return response.send({ msg: mockUserData });
-});
+app.post(
+  "/api/users",
+  checkSchema(createUserValidationSchema),
+  (request, response) => {
+    const result = validationResult(request);
+    if (!result.isEmpty())
+      return response.status(400).send({ msg: result?.errors });
+
+    const data = matchedData(request);
+
+    const newUser = {
+      id: mockUserData[mockUserData.length - 1].id + 1,
+      ...data,
+    };
+    mockUserData.push(newUser);
+    return response.send({ msg: mockUserData });
+  }
+);
 
 // PUT
 
