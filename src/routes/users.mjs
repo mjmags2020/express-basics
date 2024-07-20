@@ -15,6 +15,14 @@ router.get(
   "/api/users",
   query("username").isString().isLength({ min: 3 }).optional(),
   (request, response) => {
+    console.log("session.id", request.session.id);
+    request.sessionStore.get(request.session.id, (err, sessionData) => {
+      if (err) {
+        console.log(err);
+        throw err;
+      }
+      console.log("sessionData", sessionData);
+    });
     const result = validationResult(request);
     if (!result.isEmpty())
       return response.status(400).send({ msg: result?.errors });

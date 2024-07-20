@@ -1,10 +1,12 @@
 export const mockUserData = [
   {
     id: 1,
-    username: "mjm",
+    username: "mj",
+    password: 123,
   },
   {
     id: 2,
-    username: "mjm2",
+    username: "jm",
+    password: 321,
   },
 ];
