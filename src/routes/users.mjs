@@ -9,13 +9,37 @@ import { mockUserData } from "../utils/constants.mjs";
 import { createUserValidationSchema } from "../utils/validationSchema.mjs";
 import { resolvevIndexByUserId } from "../utils/middlewares.mjs";
 import { User } from "../mongoose/schema/user.mjs";
+import { hashPassword } from "../utils/helpers.mjs";
 
 const router = Router();
 
 router.get(
   "/api/users",
   query("username").isString().isLength({ min: 3 }).optional(),
-  (request, response) => {}
+  (request, response) => {
+    console.log("session.id", request.session.id);
+    request.sessionStore.get(request.session.id, (err, sessionData) => {
+      if (err) {
+        console.log(err);
+        throw err;
+      }
+      console.log("sessionData", sessionData);
+    });
+    const result = validationResult(request);
+    if (!result.isEmpty())
+      return response.status(400).send({ msg: result?.errors });
+
+    const {
+      query: { username },
+    } = request;
+
+    if (username)
+      return response
+        .status(201)
+        .send(mockUserData.find((user) => user.username === username));
+
+    response.status(201).send(mockUserData);
+  }
 );
 
 router.get("/api/users/:id", resolvevIndexByUserId, (request, response) => {
@@ -35,6 +59,7 @@ router.post(
     // const data = matchedData(request);
     const { body } = request;
     console.log(body);
+    body.password = hashPassword(body.password);
     const newUSer = new User(body);
     try {
       const savedUser = await newUSer.save();
