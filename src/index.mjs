@@ -3,7 +3,8 @@ import { loggingMiddleware } from "./utils/middlewares.mjs";
 import routes from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import { mockUserData } from "./utils/constants.mjs";
+import passport from "passport";
+import "./strategies/local-strategy.mjs";
 
 const PORT = process.env.PORT || 3002;
 
@@ -23,9 +24,11 @@ app.use(
   })
 );
 
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(loggingMiddleware);
 app.use(routes);
-
 app.listen(PORT, () => {
   console.log(`Running on Port ${PORT}`);
 });
@@ -40,20 +43,47 @@ app.get("/", (request, response) => {
   response.status(201).send({ msg: "Hi" });
 });
 
-app.post("/api/auth", (request, response) => {
+//  OLD: manual setting of session
+// app.post("/api/auth", (request, response) => {
+//   const { username, password } = request.body;
+
+//   const findUsers = mockUserData.find((user) => user.username === username);
+//   if (!findUsers) return response.status(401).send({ msg: "BAD CREDENTIALS" });
+
+//   if (findUsers.password !== password)
+//     return response.status(401).send({ msg: "BAD CREDENTIALS" });
+
+//   request.session.user = findUsers;
+//   return response.status(200).send(findUsers);
+// });
+
+// app.get("/api/auth/status", (request, response) => {
+//   return request.session.user
+//     ? response.status(200).send(request.session.user)
+//     : response.status(401).send({ msg: "Not Authenticated" });
+// });
+
+// NEW: With Passport.js
+app.post("/api/auth", passport.authenticate("local"), (request, response) => {
   const { username, password } = request.body;
 
-  const findUsers = mockUserData.find((user) => user.username === username);
-  if (!findUsers) return response.status(401).send({ msg: "BAD CREDENTIALS" });
-
-  if (findUsers.password !== password)
-    return response.status(401).send({ msg: "BAD CREDENTIALS" });
-
-  request.session.user = findUsers;
-  return response.status(200).send(findUsers);
+  return response.sendStatus(200);
 });
+
+app.post("/api/auth/logout", (request, response) => {
+  const { username, password } = request.body;
+
+  if (!request.user) return response.sendStatus(401);
+  request.logout((err) => {
+    if (err) return response.sendStatus(400);
+    response.sendStatus(200);
+  });
+});
+
 app.get("/api/auth/status", (request, response) => {
-  return request.session.user
-    ? response.status(200).send(request.session.user)
-    : response.status(401).send({ msg: "Not Authenticated" });
+  console.log("/api/auth/status");
+  console.log(request.user);
+  return request.user
+    ? response.status(200).send(request.user)
+    : response.sendStatus(400);
 });
