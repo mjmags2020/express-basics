@@ -5,10 +5,17 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import passport from "passport";
 import "./strategies/local-strategy.mjs";
+import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 3002;
 
 const app = express();
+
+mongoose
+  .connect("mongodb://localhost:27017/express_basics")
+  .then(() => console.log("Connected to DB"))
+  .catch((err) => console.log(err));
+
 app.use(express.json());
 
 // You can set any secret code. In this code, we used "helloworld"

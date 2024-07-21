@@ -5,17 +5,38 @@ import {
   query,
   validationResult,
 } from "express-validator";
-import { mockUserData } from "../utils/constants.mjs";
-import { createUserValidationSchema } from "../utils/validationSchema.mjs";
-import { resolvevIndexByUserId } from "../utils/middlewares.mjs";
-import { User } from "../mongoose/schema/user.mjs";
+import { mockUserData } from "../../utils/constants.mjs";
+import { createUserValidationSchema } from "../../utils/validationSchema.mjs";
+import { resolvevIndexByUserId } from "../../utils/middlewares.mjs";
 
 const router = Router();
 
 router.get(
   "/api/users",
   query("username").isString().isLength({ min: 3 }).optional(),
-  (request, response) => {}
+  (request, response) => {
+    console.log("session.id", request.session.id);
+    request.sessionStore.get(request.session.id, (err, sessionData) => {
+      if (err) {
+        console.log(err);
+        throw err;
+      }
+      console.log("sessionData", sessionData);
+    });
+    const result = validationResult(request);
+    if (!result.isEmpty())
+      return response.status(400).send({ msg: result?.errors });
+    const {
+      query: { username },
+    } = request;
+
+    if (username)
+      return response
+        .status(201)
+        .send(mockUserData.find((user) => user.username === username));
+
+    response.status(201).send(mockUserData);
+  }
 );
 
 router.get("/api/users/:id", resolvevIndexByUserId, (request, response) => {
@@ -27,22 +48,19 @@ router.get("/api/users/:id", resolvevIndexByUserId, (request, response) => {
 router.post(
   "/api/users",
   checkSchema(createUserValidationSchema),
-  async (request, response) => {
+  (request, response) => {
     const result = validationResult(request);
     if (!result.isEmpty())
       return response.status(400).send({ msg: result?.errors });
 
-    // const data = matchedData(request);
-    const { body } = request;
-    console.log(body);
-    const newUSer = new User(body);
-    try {
-      const savedUser = await newUSer.save();
-      return response.status(200).send(savedUser);
-    } catch (error) {
-      console.log(error);
-      return response.sendStatus(400);
-    }
+    const data = matchedData(request);
+
+    const newUser = {
+      id: mockUserData[mockUserData.length - 1].id + 1,
+      ...data,
+    };
+    mockUserData.push(newUser);
+    return response.send({ msg: mockUserData });
   }
 );
 
